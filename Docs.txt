@@ -1,0 +1,96 @@
+So, OOP is implemented in Lua part only, C++ part due to issues with classes and GLEW, is not OO!
+
+But basically, my engine looks for game.lua file in it's running folder. If it finds it, it injects Lua API and runs the code.
+Games work in Lua language only, they never meet C++ part directly, they use API. In fact, game devs never would see any C++ code ever!
+
+I will explain most of the functions here:
+
+jgel.displayClear(red,green,blue,alpha) - sets display color to whatever color you input, values are from 0 to 1
+jgel.setLuaKiller(boolean, time) - sets if Lua Killer would be active or not, and how much it will wait until it kills the game due to not responding
+boolean = jgel.isDone() - returns if user ever pressed on Close button or Alt+F4
+
+jgel.initWindow(width, height, window_name, enableCulling) - creates window with width and height, specified name and if faces will use depth map and stuff
+This is a must-have function, all object related functions will force a crash if window wasn't initialized first
+
+jgel.sleep(time in milliseconds) - equals to windows.h Sleep(time)
+table = jgel.pullEvents() - is a must-have function that updates the screen and polls events
+jgel.subToEvents(function) - will call function with table as argument from pullEvents
+
+boolean = jgel.keyboard.isKeyDown(keyName) - returns if key is down
+nil or string = jgel.keyboard.getKeyEvent() - returns last key that been pressed
+
+int,int = jgel.mouse.getMousePos() - returns mouse position relative to game window
+jgel.mouse.setMousePos(x,y)  - sets mouse position relative to game window
+int,int = jgel.mouse.getMouseInput() - returns last raw mouse input event
+
+jgel.sunvox - is a table of SunVox tables, is a basic copy of all SunVox functions, refer to http://www.warmplace.ru/soft/sunvox/sunvox_lib-1.9.3.zip
+
+=== This is where OOP begins~ ===
+
+cameraObject = jgel.createCamera({x,y,z},FOV,zNear,zFar) - creates camera object
+
+cameraObject.setPosition({x,y,z}) - changes camera position
+cameraObject.setRotation({x,y,z}) - changes camera rotation
+cameraObject.setFOV(fov) - changes camera FOV
+cameraObject.setZRange(zNear,zFar) - changes camera Z range
+x,y,z = cameraObject.getPosition() - returns camera position
+x,y,z = cameraObject.getForward() - returns camera's forward directional vector
+x,y,z = cameraObject.getLeft() - returns camera's left directional vector
+x,y,z = cameraObject.getUp() - returns camera's up directional vector
+id = cameraObject.getID() - returns camera's ID
+cameraObject.delete() - deletes camera from memory
+
+
+
+textureObject = jgel.createTexture(filename) - creates texture object and loads image
+
+textureObject.SetTexture(filename) - changes texture's image to other one, loading new one from file
+id = textureObject.getID() - returns texture's ID
+textureObject.delete() - deletes texture from memory
+
+
+
+
+meshObject = jgel.createMeshObject({x,y,z},{filename or vertex_table [,indices_table]},{r,g,b,a}) - creates mesh object, either from file or from raw data. Accepts OBJ with UV (crashes if there's no UV), and FBX(ascii only, binary doesn't work)
+
+meshObject.setCamera(cameraObject) - sets which camera will draw the object
+meshObject.draw() - draws object on screen, will fail if mesh object isn't assigned to a camera, or there was no cameras at the moment of mesh object creation
+meshObject.setPosition({x,y,z}) - sets mesh position
+meshObject.setRotation({x,y,z}) - sets mesh rotation
+meshObject.setScale({x,y,z}) - sets mesh scale
+meshObject.setColor({r,g,b,a}) - sets mesh color
+meshObject.setTexture(textureObject) - sets mesh texture
+meshObject.createBasicShader() - creates basic shader for the mesh, is default shader and is done as mesh object is created
+meshObject.createTexturedShader() - creates textured shader, is required to see textures on mesh
+meshObject.createUIShader() - makes the object me an UI element
+meshObject.copy() - creates a complete copy of your object and outputs it as a independent object, the copy will not have "copy" function though
+string = meshObject.getShaderType() - returns shader type
+meshObject.delete() - deletes object from memory
+
+
+
+textObject = jgel.createText(text,x,y,{r,g,b,a}) - creates text object, requires OpenGL 4 and later to work
+
+textObject.draw() - draws text on screen
+textObject.setText(text) - sets object's text
+textObject.setPosition(x,y) - sets object's position on screen using screen coords
+textObject.delete() - deletes object from memory
+
+
+
+threadObject = jgel.createThread(string_of_code) - loads and runs lua code in separate thread, use with caution, WIP
+
+threadObject.send(...) - sends whatever agruments to the other thread, and calls receive(...)
+
+other thread to receive message has to have this code:
+function receive(...)
+	--do something
+end
+
+
+That's quite all, there's an example of working game loop:
+
+while not jgel.isDone() do
+	jgel.displayClear(0,0,0,0)
+	jgel.pullEvent()
+end
